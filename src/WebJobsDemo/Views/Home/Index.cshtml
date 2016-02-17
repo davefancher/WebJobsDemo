@@ -1,0 +1,201 @@
+﻿
+@{
+    ViewBag.Title = "Waiting List";
+}
+
+<h2>@ViewBag.Title</h2>
+
+<div class="row">
+    <div class="col-xs-8">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h4 class="panel-title">Reservations</h4>
+            </div>
+            <!-- ko if: reservations().length > 0 -->
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>&nbsp;</th>
+                        <th>Email Address</th>
+                        <th>Party Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- ko foreach: reservations -->
+                    <tr>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Action&nbsp;<span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#" data-bind="click: $parent.CheckIn">Check-in</a></li>
+                                    <li><a href="#" data-bind="click: $parent.CancelReservation">Cancel</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td data-bind="text: emailAddress"></td>
+                        <td data-bind="text: partySize"></td>
+                    </tr>
+                    <!-- /ko -->
+                </tbody>
+            </table>
+            <!-- /ko -->
+            <!-- ko if: reservations().length === 0 -->
+            <div class="panel-body text-center">
+                There are no reservations
+            </div>
+            <!-- /ko -->
+        </div>
+    </div>
+
+    <div class="col-xs-4">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h4 class="panel-title">Check-in</h4>
+            </div>
+            <div class="panel-body form-horizontal">
+                <div class="form-group">
+                    <label class="control-label col-xs-4" for="emailAddress">Email</label>
+                    <div class="col-xs-8">
+                        <input type="email" class="form-control" name="emailAddress" id="emailAddress" data-bind="value: newReservation().emailAddress" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-xs-4" for="partySize">Party Size</label>
+                    <div class="col-xs-8">
+                        <input type="number" class="form-control" name="partySize" id="partySize" data-bind="value: newReservation().partySize" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-12 text-right">
+                        <input type="button" class="btn btn-primary" value="Add Reservation" data-bind="click: AddReservation" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script language="javascript" type="text/javascript">
+        var IdGenerator = (function () {
+            function __GetNext() {
+                var self = this;
+                var d = new Date();
+                return self.sessionId + "_" + d.valueOf().toString();
+            }
+
+            function IdGenerator(sessionId) {
+                var self = this;
+                self.sessionId = sessionId;
+            }
+
+            IdGenerator.prototype.GetNext = __GetNext;
+
+            return IdGenerator;
+        })();
+
+        var QueueService = (function () {
+            function __Enqueue(data) {
+                var self = this;
+                var payload = Base64.encode(ko.toJSON(data));
+
+                var options = {
+                    "url": self.uri,
+                    "type": "POST",
+                    "dataType": "text",
+                    "contentType": "application/json",
+                    "cache": false,
+                    "data": "<QueueMessage><MessageText>" + payload + "</MessageText></QueueMessage>",
+                };
+
+                return $.ajax(options);
+            }
+
+            function QueueService(uri) {
+                var self = this;
+                this.uri = uri;
+            }
+
+            QueueService.prototype.Enqueue = __Enqueue;
+
+            return QueueService;
+        })();
+
+        var ReservationViewModel = (function () {
+            function ReservationViewModel() {
+                var self = this;
+                self.emailAddress = ko.observable();
+                self.partySize = ko.observable();
+            }
+
+            return ReservationViewModel;
+        })();
+
+        var ReservationsViewModel = (function () {
+            function __AddReservation() {
+                var self = this;
+                var newReservation = ko.toJS(self.newReservation());
+                if (!newReservation.emailAddress || !newReservation.partySize) return;
+
+                newReservation.id = self.idGenerator.GetNext();
+
+                self
+                    .queueService
+                    .Enqueue({ "action": "CreateReservation", "id": newReservation.id, "emailAddress": newReservation.emailAddress, "partySize": newReservation.partySize })
+                    .done(function (data) {
+                        self.reservations.push(newReservation);
+                        self.newReservation(new ReservationViewModel());
+                    })
+                    .fail(function (xhr) { debugger; });
+            }
+
+            function __CancelReservation(reservation) {
+                var self = this;
+
+                self
+                    .queueService
+                    .Enqueue({ "action": "CancelReservation", "id": reservation.id })
+                    .done(function (data) {
+                        self.reservations.remove(reservation);
+                    })
+                    .fail(function (xhr) { });
+            }
+
+            function __CheckIn(reservation) {
+                var self = this;
+
+                self
+                    .queueService
+                    .Enqueue({ "action": "CheckIn", "id": reservation.id })
+                    .done(function (data) {
+                        self.reservations.remove(reservation);
+                    })
+                    .fail(function (xhr) { });
+            }
+
+            function ReservationsViewModel(queueService, idGenerator) {
+                var self = this;
+
+                self.queueService = queueService;
+                self.idGenerator = idGenerator;
+                self.reservations = ko.observableArray();
+                self.newReservation = ko.observable(new ReservationViewModel());
+                self.AddReservation = __AddReservation.bind(self);
+                self.CancelReservation = __CancelReservation.bind(self);
+                self.CheckIn = __CheckIn.bind(self);
+            }
+
+            return ReservationsViewModel;
+        })();
+
+        var idGenerator = new IdGenerator("@Html.Raw(ViewBag.SessionId)");
+        var queueService = new QueueService("@Html.Raw(ViewBag.QueueUri)");
+        var vm = new ReservationsViewModel(queueService, idGenerator);
+
+        $(document).ready(function () {
+            ko.applyBindings(vm);
+        });
+    </script>
+}
