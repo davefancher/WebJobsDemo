@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using WebJobsDemo.Services;
 
@@ -15,7 +12,7 @@ namespace WebJobsDemo.Controllers
         {
             ViewBag.SessionId = HttpContext.Session.SessionID;
             ViewBag.QueueUri =
-                "CheckinQueue"
+                "ReservationQueue"
                     .Map(queueStorage.GetSasUri);
 
             return View();

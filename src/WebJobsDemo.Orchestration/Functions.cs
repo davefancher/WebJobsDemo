@@ -36,6 +36,15 @@ namespace WebJobsDemo.Orchestration
         public int PartySize { get; set; }
     }
 
+    public class NotificationMessage
+    {
+        public string Recipient { get; set; }
+
+        public string Subject { get; set; }
+
+        public string MessageText { get; set; }
+    }
+
     public class Functions
     {
         private readonly ITableStorageService _tableStorageService;
@@ -47,54 +56,86 @@ namespace WebJobsDemo.Orchestration
             _tableStorageService = tableStorageService;
         }
 
-        public void ProcessQueueMessage(
-            [QueueTrigger("CheckinQueue")] ReservationAction item,
-            [SendGrid] ref SendGridMessage message,
+        public void SendEmail(
+            [QueueTrigger("EmailQueue")] NotificationMessage notification,
+            [SendGrid] ref SendGridMessage email,
             TextWriter log)
         {
-            log.WriteLine(item);
+            $"Sending message to {notification.Recipient}".Tee(log.WriteLine);
 
-            var idParts = item.Id.Split('_');
+            email.To = new[] { new MailAddress(notification.Recipient) };
+            email.Subject = notification.Subject;
+            email.Text = notification.MessageText;
+        }
+
+        private NotificationMessage HandleCreateReservationAction(string pk, string rk, ReservationAction action)
+        {
+            _tableStorageService.Insert("Reservations", pk, rk, new Reservation { EmailAddress = action.EmailAddress, PartySize = action.PartySize });
+
+            return
+                new NotificationMessage
+                {
+                    Recipient = action.EmailAddress,
+                    Subject = "You've been added to the waiting list!",
+                    MessageText = $"Your party of {action.PartySize} has been added to the waiting list! You'll receive another email when your table is ready."
+                };
+        }
+
+        private NotificationMessage HandleCancelReservationAction(string pk, string rk, ReservationAction action)
+        {
+            var reservation = _tableStorageService.GetById<Reservation>("Reservations", pk, rk);
+            _tableStorageService.Delete("Reservations", pk, rk);
+
+            return
+                new NotificationMessage
+                {
+                    Recipient = reservation.EmailAddress,
+                    Subject = "You've been removed from the waiting list",
+                    MessageText = "You've been added to the waiting list! Sorry to see you go!"
+                };
+        }
+
+        private NotificationMessage HandleCheckInAction(string pk, string rk, ReservationAction action)
+        {
+            var reservation = _tableStorageService.GetById<Reservation>("Reservations", pk, rk);
+            _tableStorageService.Delete("Reservations", pk, rk);
+
+            return
+                new NotificationMessage
+                {
+                    Recipient = reservation.EmailAddress,
+                    Subject = "You're checked in!",
+                    MessageText = $"Thank you for checking in your party of {reservation.PartySize}! Enjoy your meal!"
+                };
+        }
+
+        public void HandleReservationAction(
+            [QueueTrigger("ReservationQueue")] ReservationAction action,
+            [Queue("EmailQueue")] out NotificationMessage notification,
+            TextWriter log)
+        {
+            log.WriteLine(action);
+
+            var idParts = action.Id.Split('_');
             var pk = idParts[0];
             var rk = idParts[1];
 
-            switch(item.Action)
+            switch(action.Action)
             {
                 case ReservationAction.ActionNames.CreateReservation:
-                    {
-                        _tableStorageService.Insert("Reservations", pk, rk, new Reservation { EmailAddress = item.EmailAddress, PartySize = item.PartySize });
-
-                        message.To = new[] { new MailAddress(item.EmailAddress) };
-                        message.Subject = "You've been added to the waiting list!";
-                        message.Text = $"Your party of {item.PartySize} has been added to the waiting list! You'll receive another email when your table is ready.";
-
-                        return;
-                    }
+                    notification = HandleCreateReservationAction(pk, rk, action);
+                    return;
 
                 case ReservationAction.ActionNames.CancelReservation:
-                    {
-                        var reservation = _tableStorageService.GetById<Reservation>("Reservations", pk, rk);
-                        _tableStorageService.Delete("Reservations", pk, rk);
-
-                        message.To = new[] { new MailAddress(reservation.EmailAddress) };
-                        message.Subject = "You've been removed from the waiting list";
-                        message.Text = "You've been added to the waiting list! Sorry to see you go!";
-
-                        return;
-                    }
+                    notification = HandleCancelReservationAction(pk, rk, action);
+                    return;
 
                 case ReservationAction.ActionNames.CheckIn:
-                    {
-                        var reservation = _tableStorageService.GetById<Reservation>("Reservations", pk, rk);
-                        _tableStorageService.Delete("Reservations", pk, rk);
-
-                        message.To = new[] { new MailAddress(reservation.EmailAddress) };
-                        message.Subject = "You're checked in!";
-                        message.Text = $"Thank you for checking in your party of {reservation.PartySize}! Enjoy your meal!";
-
-                        return;
-                    }
+                    notification = HandleCheckInAction(pk, rk, action);
+                    return;
             }
+
+            throw new InvalidOperationException();
         }
     }
 }
