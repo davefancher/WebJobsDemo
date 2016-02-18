@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net.Mail;
 using System.Text;
@@ -22,8 +23,11 @@ namespace WebJobsDemo.Orchestration
             config.UseSendGrid(
                 new SendGridConfiguration
                 {
-                    ApiKey = "",
-                    FromAddress = new MailAddress("", "WebJobs Demo")
+                    ApiKey = ConfigurationManager.AppSettings["SendGridApiKey"],
+                    FromAddress =
+                        new MailAddress(
+                            ConfigurationManager.AppSettings["SendGridMailFromAddress"],
+                            "WebJobs Demo")
                 });
 
             var host = new JobHost(config);
