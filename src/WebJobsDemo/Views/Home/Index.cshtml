@@ -1,4 +1,5 @@
-﻿
+﻿@model WebJobsDemo.Models.ReservationsViewModel
+
 @{
     ViewBag.Title = "Waiting List";
 }
@@ -190,9 +191,14 @@
             return ReservationsViewModel;
         })();
 
-        var idGenerator = new IdGenerator("@Html.Raw(ViewBag.SessionId)");
-        var queueService = new QueueService("@Html.Raw(ViewBag.QueueUri)");
+        var idGenerator = new IdGenerator("@Html.Raw(Model.SessionId)");
+        var queueService = new QueueService("@Html.Raw(Model.QueueUri)");
         var vm = new ReservationsViewModel(queueService, idGenerator);
+
+        var existingReservations = @Model.Reservations.Map(JsonConvert.SerializeObject).Map(Html.Raw);
+        existingReservations.forEach(function (r) {
+            vm.reservations.push(r);
+        });
 
         $(document).ready(function () {
             ko.applyBindings(vm);

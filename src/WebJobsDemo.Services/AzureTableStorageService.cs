@@ -16,11 +16,25 @@ namespace WebJobsDemo.Services
         void Delete(string tableName, string pk, string rk);
 
         T GetById<T>(string tableName, string pk, string rk) where T : new();
+
+        IEnumerable<T> List<T>(string tableName) where T : new();
     }
 
     public class AzureTableStorageService
         : ITableStorageService
     {
+        private static T ConvertToEntity<T>(DynamicTableEntity dte)
+            where T : new()
+        {
+            var entity = new T();
+
+            typeof(T)
+                .GetProperties()
+                .Iter(p => p.SetValue(entity, dte[p.Name].PropertyAsObject, null));
+
+            return entity;
+        }
+
         private readonly CloudTableClient _client;
 
         public AzureTableStorageService()
@@ -77,17 +91,17 @@ namespace WebJobsDemo.Services
                 $"PartitionKey eq '{pk}' and RowKey eq '{rk}'"
                     .Map(q => new TableQuery<DynamicTableEntity>().Where(q))
                     .Map(q => table.ExecuteQuery(q).SingleOrDefault())
-                    .Map(
-                        e =>
-                        {
-                            var entity = new T();
+                    .Map(ConvertToEntity<T>);
+        }
 
-                            typeof(T)
-                                .GetProperties()
-                                .Iter(p => p.SetValue(entity, e[p.Name].PropertyAsObject, null));
+        IEnumerable<T> ITableStorageService.List<T>(string tableName)
+        {
+            var table = GetTable(tableName);
 
-                            return entity;
-                        });
+            return
+                new TableQuery<DynamicTableEntity>()
+                    .Map(q => table.ExecuteQuery(q))
+                    .Select(ConvertToEntity<T>);
         }
     }
 }

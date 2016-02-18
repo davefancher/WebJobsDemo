@@ -1,50 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Mail;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using SendGrid;
 using WebJobsDemo.Services;
+using WebJobsDemo.Services.Models;
 
 namespace WebJobsDemo.Orchestration
 {
-    public class ReservationAction
-    {
-        public static class ActionNames
-        {
-            public const string CreateReservation = "CreateReservation";
-            public const string CancelReservation = "CancelReservation";
-            public const string CheckIn = "CheckIn";
-        }
-
-        public string Action { get; set; }
-
-        public string Id { get; set; }
-
-        public string EmailAddress { get; set; }
-
-        public int PartySize { get; set; }
-    }
-
-    public class Reservation
-    {
-        public string EmailAddress { get; set; }
-
-        public int PartySize { get; set; }
-    }
-
-    public class NotificationMessage
-    {
-        public string Recipient { get; set; }
-
-        public string Subject { get; set; }
-
-        public string MessageText { get; set; }
-    }
-
     public class Functions
     {
         private readonly ITableStorageService _tableStorageService;
@@ -70,7 +33,17 @@ namespace WebJobsDemo.Orchestration
 
         private NotificationMessage HandleCreateReservationAction(string pk, string rk, ReservationAction action)
         {
-            _tableStorageService.Insert("Reservations", pk, rk, new Reservation { EmailAddress = action.EmailAddress, PartySize = action.PartySize });
+            _tableStorageService
+                .Insert(
+                    "Reservations",
+                    pk,
+                    rk,
+                    new Reservation
+                    {
+                        Id = action.Id,
+                        EmailAddress = action.EmailAddress,
+                        PartySize = action.PartySize
+                    });
 
             return
                 new NotificationMessage
