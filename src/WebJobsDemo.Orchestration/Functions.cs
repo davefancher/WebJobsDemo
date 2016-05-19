@@ -19,18 +19,6 @@ namespace WebJobsDemo.Orchestration
             _tableStorageService = tableStorageService;
         }
 
-        public void SendEmail(
-            [QueueTrigger("EmailQueue")] NotificationMessage notification,
-            [SendGrid] ref SendGridMessage email,
-            TextWriter log)
-        {
-            $"Sending message to {notification.Recipient}".Tee(log.WriteLine);
-
-            email.To = new[] { new MailAddress(notification.Recipient) };
-            email.Subject = notification.Subject;
-            email.Text = notification.MessageText;
-        }
-
         private NotificationMessage HandleCreateReservationAction(string pk, string rk, ReservationAction action)
         {
             _tableStorageService
@@ -109,6 +97,18 @@ namespace WebJobsDemo.Orchestration
             }
 
             throw new InvalidOperationException();
+        }
+
+        public void SendEmail(
+            [QueueTrigger("EmailQueue")] NotificationMessage notification,
+            [SendGrid] ref SendGridMessage email,
+            TextWriter log)
+        {
+            $"Sending message to {notification.Recipient}".Tee(log.WriteLine);
+
+            email.To = new[] { new MailAddress(notification.Recipient) };
+            email.Subject = notification.Subject;
+            email.Text = notification.MessageText;
         }
     }
 }
