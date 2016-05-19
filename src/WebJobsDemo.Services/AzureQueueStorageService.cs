@@ -23,9 +23,8 @@ namespace WebJobsDemo.Services
         public AzureQueueStorageService()
         {
             _client =
-                ConfigurationManager
-                    .ConnectionStrings["AzureWebJobsStorage"]
-                    .ConnectionString
+                ConfigurationStore
+                    .GetConnectionString("WebJobDemo")
                     .Map(CloudStorageAccount.Parse)
                     .CreateCloudQueueClient();
         }

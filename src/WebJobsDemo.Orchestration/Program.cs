@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
 using System.Net.Mail;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.WindowsAzure;
 
 namespace WebJobsDemo.Orchestration
 {
@@ -14,19 +11,23 @@ namespace WebJobsDemo.Orchestration
     {
         static void Main()
         {
+            var connStr = ConfigurationStore.GetConnectionString("WebJobDemo");
+
             var config =
                 new JobHostConfiguration
                 {
-                    JobActivator = NinjectJobActivator.Instance
+                    JobActivator = NinjectJobActivator.Instance,
+                    DashboardConnectionString = connStr,
+                    StorageConnectionString = connStr
                 };
 
             config.UseSendGrid(
                 new SendGridConfiguration
                 {
-                    ApiKey = ConfigurationManager.AppSettings["SendGridApiKey"],
+                    ApiKey = ConfigurationStore.GetAppSetting("SendGridApiKey"),
                     FromAddress =
                         new MailAddress(
-                            ConfigurationManager.AppSettings["SendGridMailFromAddress"],
+                            ConfigurationStore.GetAppSetting("SendGridMailFromAddress"),
                             "WebJobs Demo")
                 });
 

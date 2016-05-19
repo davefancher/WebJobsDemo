@@ -71,6 +71,7 @@
   <ItemGroup>
     <Compile Include="AzureQueueStorageService.cs" />
     <Compile Include="AzureTableStorageService.cs" />
+    <Compile Include="ConfigurationStore.cs" />
     <Compile Include="FunctionalExtensions.cs" />
     <Compile Include="Models\NotificationMessage.cs" />
     <Compile Include="Models\Reservation.cs" />
