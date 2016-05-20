@@ -37,7 +37,7 @@ App_Data/
 .vs/
 Ankh.NoLoad
 *.Publish.xml
-
+*.pubxml
 
 #Project files
 [Bb]uild/
