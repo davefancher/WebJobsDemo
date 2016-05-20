@@ -41,7 +41,7 @@ namespace WebJobsDemo.Services
         {
             _client =
                 ConfigurationStore
-                    .GetConnectionString("WebJobDemo")
+                    .GetConnectionString("WebJobsDemo")
                     .Map(CloudStorageAccount.Parse)
                     .CreateCloudTableClient();
         }
@@ -56,6 +56,7 @@ namespace WebJobsDemo.Services
             var table = GetTable(tableName);
 
             var entity = new DynamicTableEntity(pk, rk);
+
             typeof(T)
                 .GetProperties()
                 .Iter(p => entity[p.Name] = p.GetValue(value, null).Map(EntityProperty.CreateEntityPropertyFromObject));

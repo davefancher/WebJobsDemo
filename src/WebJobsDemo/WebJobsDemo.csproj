@@ -134,10 +134,10 @@
     <Content Include="Content\Site.css" />
     <Content Include="Global.asax" />
     <Content Include="packages.config" />
-    <None Include="Properties\PublishProfiles\DWFWebJobsDemo.pubxml" />
     <Content Include="Scripts\Base64.js" />
     <Content Include="Scripts\jquery-1.9.1.min.map" />
     <Content Include="Properties\webjobs-list.json" />
+    <None Include="Properties\PublishProfiles\DWFWebJobsDemo - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-2.2.0.intellisense.js" />
     <Content Include="Scripts\jquery-2.2.0.js" />
     <Content Include="Scripts\jquery-2.2.0.min.js" />
@@ -195,6 +195,7 @@
       <Name>WebJobsDemo.Services</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

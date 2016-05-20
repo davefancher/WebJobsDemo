@@ -24,7 +24,7 @@ namespace WebJobsDemo.Services
         {
             _client =
                 ConfigurationStore
-                    .GetConnectionString("WebJobDemo")
+                    .GetConnectionString("WebJobsDemo")
                     .Map(CloudStorageAccount.Parse)
                     .CreateCloudQueueClient();
         }

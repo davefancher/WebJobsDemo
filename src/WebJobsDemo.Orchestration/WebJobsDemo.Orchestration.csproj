@@ -107,6 +107,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionHandlers\CancelReservationActionHandler.cs" />
+    <Compile Include="ActionHandlers\CheckInReservationActionHandler.cs" />
+    <Compile Include="ActionHandlers\CreateReservationActionHandler.cs" />
+    <Compile Include="ActionHandlers\IReservationActionHandler.cs" />
+    <Compile Include="ActionHandlers\ReservationActionRouter.cs" />
     <Compile Include="NinjectJobActivator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Functions.cs" />

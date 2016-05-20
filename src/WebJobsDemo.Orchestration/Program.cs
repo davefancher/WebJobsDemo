@@ -11,7 +11,7 @@ namespace WebJobsDemo.Orchestration
     {
         static void Main()
         {
-            var connStr = ConfigurationStore.GetConnectionString("WebJobDemo");
+            var connStr = ConfigurationStore.GetConnectionString("WebJobsDemo");
 
             var config =
                 new JobHostConfiguration
