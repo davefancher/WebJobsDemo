@@ -1,28 +1,26 @@
 ﻿@model WebJobsDemo.Models.ReservationsViewModel
-
 @{
     ViewBag.Title = "Waiting List";
 }
-
 <h2>@ViewBag.Title</h2>
-
 <div class="row">
     <div class="col-xs-8">
         <div class="panel panel-primary">
             <div class="panel-heading">
                 <h4 class="panel-title">Reservations</h4>
             </div>
-            <!-- ko if: reservations().length > 0 -->
+            <!-- ko if: Reservations().length > 0 -->
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>&nbsp;</th>
                         <th>Email Address</th>
                         <th>Party Size</th>
+                        <th>Table Ready?</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- ko foreach: reservations -->
+                    <!-- ko foreach: Reservations -->
                     <tr>
                         <td>
                             <div class="btn-group">
@@ -30,6 +28,7 @@
                                     Action&nbsp;<span class="caret"></span>
                                 </button>
                                 <ul class="dropdown-menu">
+                                    <li><a href="#" data-bind="click: $parent.NotifyGuest">Notify</a></li>
                                     <li><a href="#" data-bind="click: $parent.CheckIn">Check-in</a></li>
                                     <li><a href="#" data-bind="click: $parent.CancelReservation">Cancel</a></li>
                                 </ul>
@@ -37,19 +36,21 @@
                         </td>
                         <td data-bind="text: emailAddress"></td>
                         <td data-bind="text: partySize"></td>
+                        <td>
+                            <div class="glyphicon" data-bind="css: { 'glyphicon-check': isReady, 'glyphicon-unchecked': !isReady }"></div>
+                        </td>
                     </tr>
                     <!-- /ko -->
                 </tbody>
             </table>
             <!-- /ko -->
-            <!-- ko if: reservations().length === 0 -->
+            <!-- ko if: Reservations().length === 0 -->
             <div class="panel-body text-center">
                 There are no reservations
             </div>
             <!-- /ko -->
         </div>
     </div>
-
     <div class="col-xs-4">
         <div class="panel panel-primary">
             <div class="panel-heading">
@@ -59,13 +60,13 @@
                 <div class="form-group">
                     <label class="control-label col-xs-4" for="emailAddress">Email</label>
                     <div class="col-xs-8">
-                        <input type="email" class="form-control" name="emailAddress" id="emailAddress" data-bind="value: newReservation().emailAddress" />
+                        <input type="email" class="form-control" name="emailAddress" id="emailAddress" data-bind="value: NewReservation().emailAddress" />
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="control-label col-xs-4" for="partySize">Party Size</label>
                     <div class="col-xs-8">
-                        <input type="number" class="form-control" name="partySize" id="partySize" data-bind="value: newReservation().partySize" />
+                        <input type="number" class="form-control" name="partySize" id="partySize" data-bind="value: NewReservation().partySize" />
                     </div>
                 </div>
                 <div class="form-group">
@@ -77,7 +78,6 @@
         </div>
     </div>
 </div>
-
 @section scripts {
     <script language="javascript" type="text/javascript">
         var IdGenerator = (function () {
@@ -129,6 +129,7 @@
                 var self = this;
                 self.emailAddress = ko.observable();
                 self.partySize = ko.observable();
+                self.isReady = ko.observable(false);
             }
 
             return ReservationViewModel;
@@ -137,41 +138,54 @@
         var ReservationsViewModel = (function () {
             function __AddReservation() {
                 var self = this;
-                var newReservation = ko.toJS(self.newReservation());
+                var newReservation = ko.toJS(self.NewReservation());
                 if (!newReservation.emailAddress || !newReservation.partySize) return;
 
-                newReservation.id = self.idGenerator.GetNext();
+                newReservation.id = self.IDGenerator.GetNext();
 
                 self
-                    .queueService
+                    .QueueService
                     .Enqueue({ "action": "CreateReservation", "id": newReservation.id, "emailAddress": newReservation.emailAddress, "partySize": newReservation.partySize })
                     .done(function (data) {
-                        self.reservations.push(newReservation);
-                        self.newReservation(new ReservationViewModel());
+                        self.Reservations.push(newReservation);
+                        self.NewReservation(new ReservationViewModel());
                     })
-                    .fail(function (xhr) { debugger; });
+                    .fail(function (xhr) { });
             }
 
             function __CancelReservation(reservation) {
                 var self = this;
 
                 self
-                    .queueService
+                    .QueueService
                     .Enqueue({ "action": "CancelReservation", "id": reservation.id })
                     .done(function (data) {
-                        self.reservations.remove(reservation);
+                        self.Reservations.remove(reservation);
                     })
                     .fail(function (xhr) { });
+            }
+
+            function __NotifyGuest(reservation) {
+                var self = this;
+
+                self
+                    .QueueService
+                    .Enqueue({ "action": "NotifyGuest", "id": reservation.id })
+                    .done(function (data) {
+                        // TODO: Resolve this back to the original reservation object
+                        reservation.isReady = true;
+                    })
+                    .fail(function (xhr) { alert("Guest could not be notified"); });
             }
 
             function __CheckIn(reservation) {
                 var self = this;
 
                 self
-                    .queueService
+                    .QueueService
                     .Enqueue({ "action": "CheckIn", "id": reservation.id })
                     .done(function (data) {
-                        self.reservations.remove(reservation);
+                        self.Reservations.remove(reservation);
                     })
                     .fail(function (xhr) { });
             }
@@ -179,11 +193,12 @@
             function ReservationsViewModel(queueService, idGenerator) {
                 var self = this;
 
-                self.queueService = queueService;
-                self.idGenerator = idGenerator;
-                self.reservations = ko.observableArray();
-                self.newReservation = ko.observable(new ReservationViewModel());
+                self.QueueService = queueService;
+                self.IDGenerator = idGenerator;
+                self.Reservations = ko.observableArray();
+                self.NewReservation = ko.observable(new ReservationViewModel());
                 self.AddReservation = __AddReservation.bind(self);
+                self.NotifyGuest = __NotifyGuest.bind(self);
                 self.CancelReservation = __CancelReservation.bind(self);
                 self.CheckIn = __CheckIn.bind(self);
             }
@@ -197,7 +212,7 @@
 
         var existingReservations = @Model.Reservations.Map(JsonConvert.SerializeObject).Map(Html.Raw);
         existingReservations.forEach(function (r) {
-            vm.reservations.push(r);
+            vm.Reservations.push(r);
         });
 
         $(document).ready(function () {

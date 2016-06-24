@@ -13,6 +13,7 @@ namespace WebJobsDemo.Services.Models
             public const string CreateReservation = "CreateReservation";
             public const string CancelReservation = "CancelReservation";
             public const string CheckIn = "CheckIn";
+            public const string NotifyGuest = "NotifyGuest";
         }
 
         public string Action { get; set; }

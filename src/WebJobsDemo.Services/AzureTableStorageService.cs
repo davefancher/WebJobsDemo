@@ -11,7 +11,7 @@ namespace WebJobsDemo.Services
 {
     public interface ITableStorageService
     {
-        void Insert<T>(string tableName, string pk, string rk, T value);
+        void InsertOrMerge<T>(string tableName, string pk, string rk, T value);
 
         void Delete(string tableName, string pk, string rk);
 
@@ -51,7 +51,7 @@ namespace WebJobsDemo.Services
                 .Map(_client.GetTableReference)
                 .Tee(r => r.CreateIfNotExists());
 
-        void ITableStorageService.Insert<T>(string tableName, string pk, string rk, T value)
+        void ITableStorageService.InsertOrMerge<T>(string tableName, string pk, string rk, T value)
         {
             var table = GetTable(tableName);
 
@@ -62,7 +62,7 @@ namespace WebJobsDemo.Services
                 .Iter(p => entity[p.Name] = p.GetValue(value, null).Map(EntityProperty.CreateEntityPropertyFromObject));
 
             entity
-                .Map(TableOperation.Insert)
+                .Map(TableOperation.InsertOrMerge)
                 .Map(op => table.Execute(op));
         }
 

@@ -13,5 +13,7 @@ namespace WebJobsDemo.Services.Models
         public string EmailAddress { get; set; }
 
         public int PartySize { get; set; }
+
+        public bool IsReady { get; set; }
     }
 }

@@ -23,7 +23,7 @@ namespace WebJobsDemo.Orchestration.ActionHandlers
             var idParts = action.Id.Split('_');
 
             _tableStorageService
-                .Insert(
+                .InsertOrMerge(
                     "Reservations",
                     idParts[0],
                     idParts[1],

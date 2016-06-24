@@ -41,6 +41,10 @@ namespace WebJobsDemo.Orchestration
                 .To<CancelReservationActionHandler>()
                 .Named(ReservationAction.ActionNames.CancelReservation);
             _kernel
+                .Bind<IReservationActionHandler>()
+                .To<NotifyGuestActionHandler>()
+                .Named(ReservationAction.ActionNames.NotifyGuest);
+            _kernel
                 .Bind<ReservationActionRouter>()
                 .ToMethod(
                     context =>

@@ -111,6 +111,7 @@
     <Compile Include="ActionHandlers\CheckInReservationActionHandler.cs" />
     <Compile Include="ActionHandlers\CreateReservationActionHandler.cs" />
     <Compile Include="ActionHandlers\IReservationActionHandler.cs" />
+    <Compile Include="ActionHandlers\NotifyGuestActionHandler.cs" />
     <Compile Include="ActionHandlers\ReservationActionRouter.cs" />
     <Compile Include="NinjectJobActivator.cs" />
     <Compile Include="Program.cs" />
